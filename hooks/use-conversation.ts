@@ -2,6 +2,7 @@ import { useState } from 'react'
 import produce from 'immer'
 import { useGetState } from 'ahooks'
 import type { ConversationItem } from '@/types/app'
+import Cookies from 'js-cookie'
 
 const storageConversationIdKey = 'conversationIdInfo'
 
@@ -26,7 +27,12 @@ function useConversation() {
     return id
   }
 
+  const userId = Cookies.get('userId')
+  let hasUserId = false
+  if (userId != '' && userId != undefined && userId != null) hasUserId = true
+  // const isNewConversation = currConversationId === '-1' && !hasUserId
   const isNewConversation = currConversationId === '-1'
+
   // input can be updated by user
   const [newConversationInputs, setNewConversationInputs] = useState<Record<string, any> | null>(null)
   const resetNewConversationInputs = () => {

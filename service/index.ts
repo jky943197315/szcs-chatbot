@@ -41,6 +41,7 @@ export const sendChatMessage = async (
 }
 
 export const fetchConversations = async () => {
+  // return get('conversations', { params: { limit: 100, first_id: '', user: 'jky-123', }, headers: { 'Authorization': 'Bearer app-M8n8gTNMWwTFGORT6ZIdH9zh' } })
   return get('conversations', { params: { limit: 100, first_id: '' } })
 }
 

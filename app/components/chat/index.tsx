@@ -145,8 +145,11 @@ const Chat: FC<IChatProps> = ({
       </div>
       {
         !isHideSendInput && (
-          <div className={cn(!feedbackDisabled && '!left-3.5 !right-3.5', 'absolute z-10 bottom-0 left-0 right-0')}>
-            <div className='p-[5.5px] max-h-[150px] bg-white border-[1.5px] border-gray-200 rounded-xl overflow-y-auto'>
+          <div className={cn(!feedbackDisabled && '!left-3.5 !right-3.5', 'absolute z-10 bottom-0 left-0 right-0')}
+          >
+            {/* <div className='p-[5.5px] max-h-[150px] bg-white border-[1.5px] border-gray-200 rounded-xl overflow-y-auto'> */}
+            <div className='p-[5.5px] max-h-[150px] border-[1.5px] border-gray-200 rounded-xl overflow-y-auto'
+              style={{ background: '#f8f9ff' }}>
               {
                 visionConfig?.enabled && (
                   <>
@@ -175,14 +178,15 @@ const Chat: FC<IChatProps> = ({
                   block w-full px-2 pr-[118px] py-[7px] leading-5 max-h-none text-sm text-gray-700 outline-none appearance-none resize-none
                   ${visionConfig?.enabled && 'pl-12'}
                 `}
+                style={{ background: '#f8f9ff' }}
                 value={query}
                 onChange={handleContentChange}
                 onKeyUp={handleKeyUp}
                 onKeyDown={handleKeyDown}
                 autoSize
               />
-              <div className="absolute bottom-2 right-2 flex items-center h-8">
-                <div className={`${s.count} mr-4 h-5 leading-5 text-sm bg-gray-50 text-gray-500`}>{query.trim().length}</div>
+              <div className="absolute bottom-8 right-2 flex items-center h-8">
+                <div className={`${s.count} mr-4 h-5 leading-5 text-sm  text-gray-500`}>{query.trim().length}</div>
                 <Tooltip
                   selector='send-tip'
                   htmlContent={
@@ -192,11 +196,17 @@ const Chat: FC<IChatProps> = ({
                     </div>
                   }
                 >
-                  <div className={`${s.sendBtn} w-8 h-8 cursor-pointer rounded-md`} onClick={handleSend}></div>
+                  {/* <div className={`${s.sendBtn} w-8 h-8 cursor-pointer rounded-md`} */}
+                  <div className={`${s.sendBtn} w-8 h-8 cursor-pointer`}
+                    onClick={handleSend}
+                  ></div>
                 </Tooltip>
               </div>
             </div>
+
+            <div className="text-center mt-2 text-xs" style={{ color: '#718096' }}>内容由AI生成</div>
           </div>
+
         )
       }
     </div>

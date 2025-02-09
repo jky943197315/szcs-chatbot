@@ -22,6 +22,7 @@ import AppUnavailable from '@/app/components/app-unavailable'
 import { API_KEY, APP_ID, APP_INFO, isShowPrompt, promptTemplate } from '@/config'
 import type { Annotation as AnnotationType } from '@/types/log'
 import { addFileInfos, sortAgentSorts } from '@/utils/tools'
+import Cookies from 'js-cookie'
 
 export type IMainProps = {
   params: any
@@ -51,7 +52,7 @@ const Main: FC<IMainProps> = () => {
 
   useEffect(() => {
     if (APP_INFO?.title)
-      document.title = `${APP_INFO.title} - Powered by Dify`
+      document.title = `${APP_INFO.title} - Powered by szcs`
   }, [APP_INFO?.title])
 
   // onData change thought (the produce obj). https://github.com/immerjs/immer/issues/576
@@ -123,13 +124,15 @@ const Main: FC<IMainProps> = () => {
       notSyncToStateInputs = newConversationInputs
       setCurrInputs(notSyncToStateInputs)
     }
-
+    // console.log(isNewConversation)
+    const userId = Cookies.get('userId')
+    let hasUserId = false
+    if (userId != '' && userId != undefined && userId != null) hasUserId = true
     // update chat list of current conversation
-    if (!isNewConversation && !conversationIdChangeBecauseOfNew && !isResponding) {
+    if ((!isNewConversation && !conversationIdChangeBecauseOfNew && !isResponding)) {
       fetchChatList(currConversationId).then((res: any) => {
         const { data } = res
         const newChatList: ChatItem[] = generateNewChatListWithOpenStatement(notSyncToStateIntroduction, notSyncToStateInputs)
-
         data.forEach((item: any) => {
           newChatList.push({
             id: `question-${item.id}`,
@@ -140,7 +143,7 @@ const Main: FC<IMainProps> = () => {
           })
           newChatList.push({
             id: item.id,
-            content: item.answer,
+            content: removeThinkTags(item.answer),
             agent_thoughts: addFileInfos(item.agent_thoughts ? sortAgentSorts(item.agent_thoughts) : item.agent_thoughts, item.message_files),
             feedback: item.feedback,
             isAnswer: true,
@@ -153,6 +156,13 @@ const Main: FC<IMainProps> = () => {
 
     if (isNewConversation && isChatStarted)
       setChatList(generateNewChatListWithOpenStatement())
+  }
+
+  function removeThinkTags(input: string): string {
+    // 使用正则表达式匹配 <think> 标签及其内容，并替换为空字符串
+    input = input.replace(/<think>([\s\S]*?)<\/think>/g, '$1')
+    input = input.replace(/<\/?query>/g, '"');
+    return input;
   }
   useEffect(handleConversationSwitch, [currConversationId, inited])
 
@@ -384,12 +394,19 @@ const Main: FC<IMainProps> = () => {
     let tempNewConversationId = ''
 
     setRespondingTrue()
-    sendChatMessage(data, {
+    //检测cookie中是否有userId，如果没有，则生成一个当前时间+随机字符串的
+
+    // const userId = Cookies.get('userId')
+    // if (userId == undefined || userId == '' || userId == null) {
+    //   Cookies.set('userId', Date.now() + Math.random().toString(36).substring(2), { expires: 365 })
+    // }
+    sendChatMessage({ ...data }, {
       getAbortController: (abortController) => {
         setAbortController(abortController)
       },
       onData: (message: string, isFirstMessage: boolean, { conversationId: newConversationId, messageId, taskId }: any) => {
-        if (!isAgentMode) {
+
+        if (!isAgentMode && (message != '<think>' && message != '</think>')) {
           responseItem.content = responseItem.content + message
         }
         else {
@@ -425,7 +442,6 @@ const Main: FC<IMainProps> = () => {
         if (getConversationIdChangeBecauseOfNew()) {
           const { data: allConversations }: any = await fetchConversations()
           const newItem: any = await generationConversationName(allConversations[0].id)
-
           const newAllConversations = produce(allConversations, (draft: any) => {
             draft[0].name = newItem.name
           })
@@ -585,6 +601,7 @@ const Main: FC<IMainProps> = () => {
   }
 
   const handleFeedback = async (messageId: string, feedback: Feedbacktype) => {
+    console.log('handleFeedback', messageId, feedback)
     await updateFeedback({ url: `/messages/${messageId}/feedbacks`, body: { rating: feedback.rating } })
     const newChatList = chatList.map((item) => {
       if (item.id === messageId) {
@@ -626,7 +643,8 @@ const Main: FC<IMainProps> = () => {
         onShowSideBar={showSidebar}
         onCreateNewChat={() => handleConversationIdChange('-1')}
       />
-      <div className="flex rounded-t-2xl bg-white overflow-hidden">
+      {/* <div className="flex rounded-t-2xl bg-white overflow-hidden"> */}
+      <div className="flex bg-white overflow-hidden" style={{ backgroundImage: 'url(./assets/images/chat-bg.png)', backgroundPosition: 'right top', backgroundRepeat: 'no-repeat' }}>
         {/* sidebar */}
         {!isMobile && renderSidebar()}
         {isMobile && isShowSidebar && (
@@ -640,7 +658,7 @@ const Main: FC<IMainProps> = () => {
           </div>
         )}
         {/* main */}
-        <div className='flex-grow flex flex-col h-[calc(100vh_-_3rem)] overflow-y-auto'>
+        <div className='flex-grow flex flex-col h-[calc(100vh_-_3rem)] overflow-y-auto chat-bg'>
           <ConfigSence
             conversationName={conversationName}
             hasSetInputs={hasSetInputs}
@@ -655,7 +673,7 @@ const Main: FC<IMainProps> = () => {
 
           {
             hasSetInputs && (
-              <div className='relative grow h-[200px] pc:w-[794px] max-w-full mobile:w-full pb-[66px] mx-auto mb-3.5 overflow-hidden'>
+              <div className='relative grow h-[200px] pc:w-[794px] max-w-full mobile:w-full pb-[86px] mx-auto mb-3.5 overflow-hidden'>
                 <div className='h-full overflow-y-auto' ref={chatListDomRef}>
                   <Chat
                     chatList={chatList}
